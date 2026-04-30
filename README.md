@@ -67,6 +67,23 @@ services:
 
 To use local image, simply remove the `image: novalagung/mllpong:latest` replace it with `build: .`.
 
+## Testing the Server
+
+Send any valid HL7 v2 message wrapped in MLLP framing to any port. A quick smoke test with `netcat`:
+
+```bash
+# ACK handler — expect MSA|AA
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG001|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2575 | tr '\r' '\n'
+
+# Chaos handler — expect MSA|AR
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG002|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2576 | tr '\r' '\n'
+
+# Smart handler — response depends on rules.json
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG003|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2577 | tr '\r' '\n'
+```
+
+> HL7 uses `\r` (carriage return) as the segment separator. Without `| tr '\r' '\n'` the response appears blank in the terminal because each segment overwrites the previous line.
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -156,23 +173,6 @@ The repository ships with a `rules.json` that covers the most common HL7 v2 mess
 
 You can replace or extend this file without rebuilding the image.
 
-## Testing the Server
-
-Send any valid HL7 v2 message wrapped in MLLP framing to any port. A quick smoke test with `netcat`:
-
-```bash
-# ACK handler — expect MSA|AA
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG001|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2575 | tr '\r' '\n'
-
-# Chaos handler — expect MSA|AR
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG002|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2576 | tr '\r' '\n'
-
-# Smart handler — response depends on rules.json
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG003|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2577 | tr '\r' '\n'
-```
-
-> HL7 uses `\r` (carriage return) as the segment separator. Without `| tr '\r' '\n'` the response appears blank in the terminal because each segment overwrites the previous line.
-
 ## Running Tests
 
 The test suite is split into two layers:
@@ -224,3 +224,7 @@ docker run -d \
 ```bash
 docker compose up -d --build
 ```
+
+## Maintainer
+
+Noval Agung Prayogo
