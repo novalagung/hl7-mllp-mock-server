@@ -1,0 +1,70 @@
+{
+  "rules": [
+    { "match": "ADT^A01", "response": "AA", "ack_text": "Patient admitted" },
+    { "match": "ADT^A02", "response": "AA", "ack_text": "Patient transferred" },
+    { "match": "ADT^A03", "response": "AA", "ack_text": "Patient discharged" },
+    { "match": "ADT^A04", "response": "AA", "ack_text": "Patient registered" },
+    { "match": "ADT^A05", "response": "AA", "ack_text": "Patient pre-admitted" },
+    { "match": "ADT^A06", "response": "AA", "ack_text": "Patient transferred to inpatient" },
+    { "match": "ADT^A07", "response": "AA", "ack_text": "Patient transferred to outpatient" },
+    { "match": "ADT^A08", "response": "AA", "ack_text": "Patient information updated" },
+    { "match": "ADT^A11", "response": "AA", "ack_text": "Admission cancelled" },
+    { "match": "ADT^A12", "response": "AA", "ack_text": "Transfer cancelled" },
+    { "match": "ADT^A13", "response": "AA", "ack_text": "Discharge cancelled" },
+    { "match": "ADT^A14", "response": "AA", "ack_text": "Pending admission" },
+    { "match": "ADT^A15", "response": "AA", "ack_text": "Pending transfer" },
+    { "match": "ADT^A16", "response": "AA", "ack_text": "Pending discharge" },
+    { "match": "ADT^A21", "response": "AA", "ack_text": "Patient on leave of absence" },
+    { "match": "ADT^A22", "response": "AA", "ack_text": "Patient returned from leave" },
+    { "match": "ADT^A24", "response": "AA", "ack_text": "Patient linked" },
+    { "match": "ADT^A28", "response": "AA", "ack_text": "Person information added" },
+    { "match": "ADT^A29", "response": "AA", "ack_text": "Person information deleted" },
+    { "match": "ADT^A31", "response": "AA", "ack_text": "Person information updated" },
+    { "match": "ADT^A37", "response": "AA", "ack_text": "Patient unlinked" },
+    { "match": "ADT^A40", "response": "AA", "ack_text": "Patient merged" },
+    { "match": "ADT^A41", "response": "AA", "ack_text": "Account merged" },
+    { "match": "ADT^A44", "response": "AA", "ack_text": "Account information moved" },
+    { "match": "ADT^A47", "response": "AA", "ack_text": "Patient identifier updated" },
+    { "match": "ADT",     "response": "AA", "ack_text": "ADT message accepted" },
+
+    { "match": "ORM^O01", "response": "AA", "ack_text": "Order accepted" },
+    { "match": "ORM",     "response": "AA", "ack_text": "Order message accepted" },
+
+    { "match": "ORU^R01", "response": "AA", "ack_text": "Observation result received" },
+    { "match": "ORU^R30", "response": "AA", "ack_text": "Observation result received (point of care)" },
+    { "match": "ORU",     "response": "AA", "ack_text": "Observation message accepted" },
+
+    { "match": "ORL^O22", "response": "AA", "ack_text": "Order response accepted" },
+    { "match": "ORL",     "response": "AA", "ack_text": "Order response accepted" },
+
+    { "match": "SIU^S12", "response": "AA", "ack_text": "Appointment booked" },
+    { "match": "SIU^S13", "response": "AA", "ack_text": "Appointment rescheduled" },
+    { "match": "SIU^S14", "response": "AA", "ack_text": "Appointment modified" },
+    { "match": "SIU^S15", "response": "AA", "ack_text": "Appointment cancelled" },
+    { "match": "SIU^S17", "response": "AA", "ack_text": "Appointment deleted" },
+    { "match": "SIU^S26", "response": "AA", "ack_text": "Scheduling notification sent" },
+    { "match": "SIU",     "response": "AA", "ack_text": "Scheduling message accepted" },
+
+    { "match": "MDM^T01", "response": "AA", "ack_text": "Original document notification accepted" },
+    { "match": "MDM^T02", "response": "AA", "ack_text": "Original document with content accepted" },
+    { "match": "MDM^T05", "response": "AA", "ack_text": "Document addendum accepted" },
+    { "match": "MDM^T11", "response": "AA", "ack_text": "Document cancel accepted" },
+    { "match": "MDM",     "response": "AA", "ack_text": "Document message accepted" },
+
+    { "match": "MFN",     "response": "AA", "ack_text": "Master file notification accepted" },
+
+    { "match": "DFT^P03", "response": "AA", "ack_text": "Financial transaction posted" },
+    { "match": "DFT",     "response": "AA", "ack_text": "Financial transaction accepted" },
+
+    { "match": "BAR^P01", "response": "AA", "ack_text": "Patient account added" },
+    { "match": "BAR^P02", "response": "AA", "ack_text": "Patient account purged" },
+    { "match": "BAR^P12", "response": "AA", "ack_text": "Diagnosis/procedure updated" },
+    { "match": "BAR",     "response": "AA", "ack_text": "Billing message accepted" },
+
+    { "match": "VXU",     "response": "AA", "ack_text": "Vaccination record update accepted" },
+    { "match": "PPR",     "response": "AA", "ack_text": "Patient problem accepted" },
+    { "match": "QRY",     "response": "AA", "ack_text": "Query accepted" },
+
+    { "match": "*",       "response": "AA", "ack_text": "Message accepted" }
+  ]
+}

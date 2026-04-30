@@ -2,12 +2,13 @@
 
 A lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
 
-It exposes two TCP endpoints with different behaviors:
+It exposes three TCP endpoints with different behaviors:
 
 | Endpoint | Default Port | Behavior |
 | --- | --- | --- |
-| ACK handler | `2575` | Always replies with `ACK` (application accept) |
-| Chaos handler | `2576` | Always replies with `NACK` (application reject) |
+| ACK handler | `2575` | Always replies with `AA` (application accept) |
+| Chaos handler | `2576` | Always replies with `AR` (application reject) |
+| Smart handler | `2577` | Responds based on message type rules from a JSON config file |
 
 ## Pull the Image
 
@@ -27,10 +28,16 @@ docker pull ghcr.io/novalagung/hl7-mllp-mock-server:latest
 docker run -d \
   -e ACK_PORT=2575 \
   -e CHAOS_PORT=2576 \
+  -e SMART_PORT=2577 \
+  -e RULES_FILE=/etc/hl7/rules.json \
   -p 2575:2575 \
   -p 2576:2576 \
+  -p 2577:2577 \
+  -v ./rules.json:/etc/hl7/rules.json:ro \
   novalagung/hl7-mllp-mock-server:latest
 ```
+
+Omit `SMART_PORT` (and the related flags) to run without the smart handler.
 
 ## Run with Docker Compose
 
@@ -38,7 +45,7 @@ docker run -d \
 docker compose up -d
 ```
 
-The included `docker-compose.yml` uses the Docker Hub image and exposes both ports with the default configuration.
+The included `docker-compose.yml` builds the image locally, exposes all three ports, and mounts `./rules.json` into the container.
 
 To stop:
 
@@ -53,24 +60,132 @@ docker compose down
 | `HOST` | `0.0.0.0` | Interface to bind |
 | `ACK_PORT` | `2575` | Port for the always-ACK handler |
 | `CHAOS_PORT` | `2576` | Port for the always-NACK chaos handler |
+| `SMART_PORT` | _(disabled)_ | Port for the rule-based smart handler; omit to disable |
+| `RULES_FILE` | `rules.json` | Path to the smart handler rules config file |
+
+## Smart Handler
+
+The smart handler (port `2577`) reads a JSON rules file at startup and matches each incoming message against the rules to decide the response. It supports per-message-type configuration, custom acknowledgment codes, artificial latency, and probabilistic chaos.
+
+### Rule file format
+
+```json
+{
+  "rules": [
+    {
+      "match": "ADT^A01",
+      "response": "AA",
+      "ack_text": "Patient admitted"
+    },
+    {
+      "match": "ORM",
+      "response": "AE",
+      "error_code": 207,
+      "error_severity": "E",
+      "error_msg": "Order processing failed"
+    },
+    {
+      "match": "ADT^A08",
+      "response": "AA",
+      "nack_rate": 0.2,
+      "ack_text": "Patient updated"
+    },
+    {
+      "match": "SIU",
+      "response": "AA",
+      "delay_ms": 500
+    },
+    {
+      "match": "*",
+      "response": "AA",
+      "ack_text": "Message accepted"
+    }
+  ]
+}
+```
+
+### Rule fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `match` | string | Message type to match. See matching rules below. |
+| `response` | string | Acknowledgment code: `AA` (accept), `AE` (error), or `AR` (reject). |
+| `ack_text` | string | Free text placed in `MSA.3`. Only meaningful for `AA` responses. |
+| `error_code` | int | HL7 error code in the `ERR` segment. Defaults to `207`. |
+| `error_severity` | string | Severity in the `ERR` segment: `E` (error), `W` (warning), `F` (fatal). Defaults to `E`. |
+| `error_msg` | string | Diagnostic message in the `ERR` segment. |
+| `delay_ms` | int | Artificial response latency in milliseconds. |
+| `nack_rate` | float | Probability (`0.0`–`1.0`) to override the configured response with `AR`. Useful for simulating intermittent failures. |
+
+### Match priority
+
+Rules are evaluated in this order — the most-specific match wins:
+
+1. **Exact** — `"ADT^A01"` matches only ADT messages with trigger event A01
+2. **Type** — `"ADT"` matches any ADT message not covered by an exact rule
+3. **Wildcard** — `"*"` matches any message not covered by type or exact rules
+
+Match values are case-insensitive. If no rule matches at all, the server defaults to `AA`.
+
+### Included `rules.json`
+
+The repository ships with a `rules.json` that covers the most common HL7 v2 message types out of the box:
+
+- **ADT** — A01 through A51 (admit, transfer, discharge, update, merge, link, cancel variants)
+- **ORM / ORU / ORL** — order and observation messages
+- **SIU** — scheduling (S12–S26)
+- **MDM** — document management (T01, T02, T05, T11)
+- **MFN** — master file notifications
+- **DFT / BAR** — financial and billing messages
+- **VXU / PPR / QRY** — vaccination, problem, and query messages
+- **`*`** — wildcard fallback returning `AA` for anything not listed above
+
+You can replace or extend this file without rebuilding the image.
 
 ## Testing the Server
 
-Send any valid HL7 v2 message wrapped in MLLP framing to either port. A quick smoke test with `netcat`:
+Send any valid HL7 v2 message wrapped in MLLP framing to any port. A quick smoke test with `netcat`:
 
 ```bash
-# Send to ACK handler — expect MSA|AA back
+# ACK handler — expect MSA|AA
 printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG001|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2575
 
-# Send to chaos handler — expect MSA|AR back
+# Chaos handler — expect MSA|AR
 printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG002|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2576
+
+# Smart handler — response depends on rules.json
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG003|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2577
 ```
+
+## Running Tests
+
+The test suite is split into two layers:
+
+**Unit + coverage tests** — no running server required, uses in-process TCP listeners:
+
+```bash
+go test ./...
+go test ./... -cover   # with coverage report
+```
+
+**Integration tests** — connects to the real server on the configured ports:
+
+```bash
+go test -tags integration ./...
+```
+
+Override the default target addresses with environment variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TARGET_HOST` | `localhost` | Host to connect to |
+| `ACK_PORT` | `2575` | ACK handler port |
+| `CHAOS_PORT` | `2576` | Chaos handler port |
+| `SMART_PORT` | `2577` | Smart handler port |
 
 ---
 
 ## Local Build
-
-If you want to build and run the image locally instead of pulling from a registry:
 
 **Build the image:**
 
@@ -84,29 +199,17 @@ docker build -t hl7-mllp-mock-server:local .
 docker run -d \
   -e ACK_PORT=2575 \
   -e CHAOS_PORT=2576 \
+  -e SMART_PORT=2577 \
+  -e RULES_FILE=/etc/hl7/rules.json \
   -p 2575:2575 \
   -p 2576:2576 \
+  -p 2577:2577 \
+  -v ./rules.json:/etc/hl7/rules.json:ro \
   hl7-mllp-mock-server:local
 ```
 
-**Or override the image in Docker Compose:**
+**Or use Docker Compose with a local build** (already the default in the included `docker-compose.yml`):
 
 ```bash
 docker compose up -d --build
-```
-
-> This requires overriding the `image` field in `docker-compose.yml` with `build: .`, or using a local override file:
-
-```yaml
-# docker-compose.override.yml
-services:
-  hl7-ack:
-    build: .
-    image: hl7-mllp-mock-server:local
-```
-
-Then run as usual:
-
-```bash
-docker compose up -d
 ```

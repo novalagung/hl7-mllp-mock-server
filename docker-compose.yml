@@ -1,12 +1,18 @@
 services:
-  hl7-ack:
-    container_name: hl7-mllp-mock-server
-    image: novalagung/hl7-mllp-mock-server:latest
+  hl7-mllp-mock-server:
+    # container_name: hl7-mllp-mock-server
+    # image: novalagung/hl7-mllp-mock-server:latest
+    build: .
     environment:
       # HOST: "0.0.0.0"
       ACK_PORT: 2575
       CHAOS_PORT: 2576
+      SMART_PORT: 2577
+      RULES_FILE: /etc/hl7/rules.json
     ports:
       - "2575:2575"
       - "2576:2576"
+      - "2577:2577"
+    volumes:
+      - ./rules.json:/etc/hl7/rules.json:ro
     restart: unless-stopped
