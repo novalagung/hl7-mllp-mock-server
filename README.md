@@ -1,4 +1,4 @@
-# HL7 MLLP Mock Server
+# MLLPong - HL7 MLLP Mock Server
 
 A lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
 
@@ -16,10 +16,10 @@ Available on both Docker Hub and GHCR:
 
 ```bash
 # Docker Hub
-docker pull novalagung/hl7-mllp-mock-server:latest
+docker pull novalagung/mllpong:latest
 
 # GHCR
-docker pull ghcr.io/novalagung/hl7-mllp-mock-server:latest
+docker pull ghcr.io/novalagung/mllpong:latest
 ```
 
 ## Run with Docker
@@ -34,7 +34,7 @@ docker run -d \
   -p 2576:2576 \
   -p 2577:2577 \
   -v ./rules.json:/etc/hl7/rules.json:ro \
-  novalagung/hl7-mllp-mock-server:latest
+  novalagung/mllpong:latest
 ```
 
 Omit `SMART_PORT` (and the related flags) to run without the smart handler.
@@ -43,8 +43,8 @@ Omit `SMART_PORT` (and the related flags) to run without the smart handler.
 
 ```bash
 services:
-  hl7-mllp-mock-server:
-    image: novalagung/hl7-mllp-mock-server:latest
+  mllpong:
+    image: novalagung/mllpong:latest
     # build: .
     environment:
       HOST: "0.0.0.0"
@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
 ```
 
-To use local image, simply remove the `image: novalagung/hl7-mllp-mock-server:latest` replace it with `build: .`.
+To use local image, simply remove the `image: novalagung/mllpong:latest` replace it with `build: .`.
 
 ## Environment Variables
 
@@ -202,7 +202,7 @@ Override the default target addresses with environment variables:
 **Build then run the image:**
 
 ```bash
-docker build -t hl7-mllp-mock-server:local .
+docker build -t mllpong:local .
 docker run -d \
   -e ACK_PORT=2575 \
   -e CHAOS_PORT=2576 \
@@ -212,7 +212,7 @@ docker run -d \
   -p 2576:2576 \
   -p 2577:2577 \
   -v ./rules.json:/etc/hl7/rules.json:ro \
-  hl7-mllp-mock-server:local
+  mllpong:local
 ```
 
 **Or use Docker Compose with a local build** (already the default in the included `docker-compose.yml`):

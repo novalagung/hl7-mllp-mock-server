@@ -1,6 +1,6 @@
 services:
-  hl7-mllp-mock-server:
-    # image: novalagung/hl7-mllp-mock-server:latest
+  mllpong:
+    # image: novalagung/mllpong:latest
     build: .
     environment:
       HOST: "0.0.0.0"

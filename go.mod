@@ -1,3 +1,3 @@
-module hl7-ping
+module mllpong
 
 go 1.22

@@ -26,7 +26,7 @@ jobs:
 
       - name: Build index page from README
         run: |
-          printf -- '---\nlayout: default\ntitle: HL7 MLLP Mock Server\n---\n\n' > docs/index.md
+          printf -- '---\nlayout: default\ntitle: MLLPong - HL7 MLLP Mock Server\n---\n\n' > docs/index.md
           tail -n +2 README.md >> docs/index.md
 
       - uses: actions/configure-pages@v4

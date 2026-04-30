@@ -114,7 +114,7 @@ func buildACK(msh []string) []byte {
 	msgType := fmt.Sprintf("ACK^%s^ACK", triggerEvent(field(msh, 8)))
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "MSH|^~\\&|hl7-mllp-pong|hl7-mllp-pong|%s|%s|%s||%s|%s|%s|%s\r",
+	fmt.Fprintf(&sb, "MSH|^~\\&|mllpong|mllpong|%s|%s|%s||%s|%s|%s|%s\r",
 		field(msh, 2), field(msh, 3), timestamp(), msgType, ctrlID, procID, version)
 	fmt.Fprintf(&sb, "MSA|AA|%s|Wow, such message, very valid, Wow!\r", ctrlID)
 	return wrapMLLP([]byte(sb.String()))
@@ -127,7 +127,7 @@ func buildNACK(msh []string, errCode int, severity, errMsg string) []byte {
 	msgType := fmt.Sprintf("ACK^%s^ACK", triggerEvent(field(msh, 8)))
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "MSH|^~\\&|hl7-mllp-pong|hl7-mllp-pong|%s|%s|%s||%s|%s|%s|%s\r",
+	fmt.Fprintf(&sb, "MSH|^~\\&|mllpong|mllpong|%s|%s|%s||%s|%s|%s|%s\r",
 		field(msh, 2), field(msh, 3), timestamp(), msgType, ctrlID, procID, version)
 	fmt.Fprintf(&sb, "MSA|AR|%s\r", ctrlID)
 	fmt.Fprintf(&sb, "ERR|||%d||%s||%s\r", errCode, severity, errMsg)
@@ -136,7 +136,7 @@ func buildNACK(msh []string, errCode int, severity, errMsg string) []byte {
 
 func buildLastDitchError(exc error) []byte {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "MSH|^~\\&|hl7-mllp-pong|hl7-mllp-pong|||%s||ACK^^ACK|||P|2.5\r", timestamp())
+	fmt.Fprintf(&sb, "MSH|^~\\&|mllpong|mllpong|||%s||ACK^^ACK|||P|2.5\r", timestamp())
 	sb.WriteString("MSA|AR|\r")
 	fmt.Fprintf(&sb, "ERR|||207||F||Cannot create valid error resp without a valid request header! %s\r", exc)
 	return wrapMLLP([]byte(sb.String()))
@@ -203,7 +203,7 @@ func buildResponse(msh []string, ackCode string, errCode int, errSeverity, errMs
 	msgType := fmt.Sprintf("ACK^%s^ACK", triggerEvent(field(msh, 8)))
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "MSH|^~\\&|hl7-mllp-pong|hl7-mllp-pong|%s|%s|%s||%s|%s|%s|%s\r",
+	fmt.Fprintf(&sb, "MSH|^~\\&|mllpong|mllpong|%s|%s|%s||%s|%s|%s|%s\r",
 		field(msh, 2), field(msh, 3), timestamp(), msgType, ctrlID, procID, version)
 	fmt.Fprintf(&sb, "MSA|%s|%s|%s\r", ackCode, ctrlID, ackText)
 	if ackCode != "AA" {
@@ -321,7 +321,7 @@ func serve(addr string, handler handlerFunc, wg *sync.WaitGroup) {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	log.Println("STARTING MLLP PONG SERVER 🏓")
+	log.Println("STARTING MLLPONG 🏓")
 	log.Println("---")
 
 	host := os.Getenv("HOST")
