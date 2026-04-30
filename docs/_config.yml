@@ -1,0 +1,3 @@
+theme: jekyll-theme-cayman
+title: HL7 MLLP Mock Server
+description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
