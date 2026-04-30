@@ -6,7 +6,7 @@ on:
     tags: ["v*"]
 
 env:
-  IMAGE_NAME: novalagung/hl7-mll-mock-server
+  IMAGE_NAME: novalagung/hl7-mllp-mock-server
 
 jobs:
   build-image-and-push:

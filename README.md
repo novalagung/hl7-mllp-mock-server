@@ -5,7 +5,7 @@ A lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Pro
 It exposes two TCP endpoints with different behaviors:
 
 | Endpoint | Default Port | Behavior |
-|---|---|---|
+| --- | --- | --- |
 | ACK handler | `2575` | Always replies with `ACK` (application accept) |
 | Chaos handler | `2576` | Always replies with `NACK` (application reject) |
 
@@ -15,10 +15,10 @@ Available on both Docker Hub and GHCR:
 
 ```bash
 # Docker Hub
-docker pull novalagung/hl7-mll-mock-server:latest
+docker pull novalagung/hl7-mllp-mock-server:latest
 
 # GHCR
-docker pull ghcr.io/novalagung/hl7-mll-mock-server:latest
+docker pull ghcr.io/novalagung/hl7-mllp-mock-server:latest
 ```
 
 ## Run with Docker
@@ -29,7 +29,7 @@ docker run -d \
   -e CHAOS_PORT=2576 \
   -p 2575:2575 \
   -p 2576:2576 \
-  novalagung/hl7-mll-mock-server:latest
+  novalagung/hl7-mllp-mock-server:latest
 ```
 
 ## Run with Docker Compose
@@ -49,7 +49,7 @@ docker compose down
 ## Environment Variables
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `HOST` | `0.0.0.0` | Interface to bind |
 | `ACK_PORT` | `2575` | Port for the always-ACK handler |
 | `CHAOS_PORT` | `2576` | Port for the always-NACK chaos handler |
@@ -75,7 +75,7 @@ If you want to build and run the image locally instead of pulling from a registr
 **Build the image:**
 
 ```bash
-docker build -t hl7-mll-mock-server:local .
+docker build -t hl7-mllp-mock-server:local .
 ```
 
 **Run directly:**
@@ -86,7 +86,7 @@ docker run -d \
   -e CHAOS_PORT=2576 \
   -p 2575:2575 \
   -p 2576:2576 \
-  hl7-mll-mock-server:local
+  hl7-mllp-mock-server:local
 ```
 
 **Or override the image in Docker Compose:**
@@ -102,7 +102,7 @@ docker compose up -d --build
 services:
   hl7-ack:
     build: .
-    image: hl7-mll-mock-server:local
+    image: hl7-mllp-mock-server:local
 ```
 
 Then run as usual:
