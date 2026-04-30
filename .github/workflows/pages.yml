@@ -25,7 +25,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build index page from README
-        run: printf -- '---\nlayout: default\ntitle: HL7 MLLP Mock Server\n---\n\n' | cat - README.md > docs/index.md
+        run: |
+          printf -- '---\nlayout: default\ntitle: HL7 MLLP Mock Server\n---\n\n' > docs/index.md
+          tail -n +2 README.md >> docs/index.md
 
       - uses: actions/configure-pages@v4
 
