@@ -1,0 +1,11 @@
+services:
+  hl7-ack:
+    image: novalagung/hl7-mll-mock-server:latest
+    environment:
+      # HOST: "0.0.0.0"
+      ACK_PORT: 2575
+      CHAOS_PORT: 2576
+    ports:
+      - "2575:2575"
+      - "2576:2576"
+    restart: unless-stopped
