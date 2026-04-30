@@ -42,16 +42,26 @@ Omit `SMART_PORT` (and the related flags) to run without the smart handler.
 ## Run with Docker Compose
 
 ```bash
-docker compose up -d
+services:
+  hl7-mllp-mock-server:
+    image: novalagung/hl7-mllp-mock-server:latest
+    # build: .
+    environment:
+      HOST: "0.0.0.0"
+      ACK_PORT: 2575
+      CHAOS_PORT: 2576
+      SMART_PORT: 2577
+      RULES_FILE: /etc/hl7/rules.json
+    ports:
+      - "2575:2575"
+      - "2576:2576"
+      - "2577:2577"
+    volumes:
+      - ./rules.json:/etc/hl7/rules.json:ro
+    restart: unless-stopped
 ```
 
-The included `docker-compose.yml` builds the image locally, exposes all three ports, and mounts `./rules.json` into the container.
-
-To stop:
-
-```bash
-docker compose down
-```
+To use local image, simply remove the `image: novalagung/hl7-mllp-mock-server:latest` replace it with `build: .`.
 
 ## Environment Variables
 
@@ -148,14 +158,16 @@ Send any valid HL7 v2 message wrapped in MLLP framing to any port. A quick smoke
 
 ```bash
 # ACK handler — expect MSA|AA
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG001|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2575
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG001|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2575 | tr '\r' '\n'
 
 # Chaos handler — expect MSA|AR
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG002|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2576
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG002|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2576 | tr '\r' '\n'
 
 # Smart handler — response depends on rules.json
-printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG003|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2577
+printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT_A01|MSG003|P|2.5\rEVN||20240101120000\rPID|||123456||Doe^John\r\x1c\x0d' | nc localhost 2577 | tr '\r' '\n'
 ```
+
+> HL7 uses `\r` (carriage return) as the segment separator. Without `| tr '\r' '\n'` the response appears blank in the terminal because each segment overwrites the previous line.
 
 ## Running Tests
 
@@ -187,15 +199,10 @@ Override the default target addresses with environment variables:
 
 ## Local Build
 
-**Build the image:**
+**Build then run the image:**
 
 ```bash
 docker build -t hl7-mllp-mock-server:local .
-```
-
-**Run directly:**
-
-```bash
 docker run -d \
   -e ACK_PORT=2575 \
   -e CHAOS_PORT=2576 \
