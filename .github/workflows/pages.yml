@@ -30,6 +30,7 @@ jobs:
         run: |
           printf -- '---\nlayout: default\ntitle: MLLPong - HL7 MLLP Mock Server\n---\n\n' > docs/index.md
           tail -n +2 README.md >> docs/index.md
+          sed -i 's|docs/img/|img/|g' docs/index.md
 
       - uses: actions/configure-pages@v4
 

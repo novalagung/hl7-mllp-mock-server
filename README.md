@@ -1,7 +1,7 @@
 # MLLPong - HL7 MLLP Mock Server
 
 <p align="center">
-  <img src="img/mllpong.png" alt="MLLPong" width="180">
+  <img src="docs/img/mllpong.png" alt="MLLPong" width="180">
 </p>
 
 A lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
