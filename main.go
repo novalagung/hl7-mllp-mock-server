@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"os"
 	"strings"
@@ -343,16 +343,16 @@ func envOr(key, fallback string) string {
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	log.Println("STARTING MLLPONG 🏓")
-	log.Println("---")
-
 	host := flag.String("host", envOr("HOST", "0.0.0.0"), "interface to bind")
 	ackPort := flag.String("ack-port", envOr("ACK_PORT", "2575"), "port for the always-ACK handler")
 	chaosPort := flag.String("chaos-port", envOr("CHAOS_PORT", "2576"), "port for the always-NACK chaos handler")
-	smartPort := flag.String("smart-port", envOr("SMART_PORT", "2577"), "port for the rule-based smart handler (omit to disable)")
+	smartPort := flag.String("smart-port", envOr("SMART_PORT", "2577"), "port for the rule-based smart handler")
 	rulesFile := flag.String("rules-file", envOr("RULES_FILE", "rules.json"), "path to the smart handler rules JSON file")
 	flag.Parse()
+
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.Println("STARTING MLLPONG 🏓")
+	log.Println("---")
 
 	var wg sync.WaitGroup
 

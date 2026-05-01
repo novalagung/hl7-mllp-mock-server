@@ -17,19 +17,19 @@ It exposes three TCP endpoints with different behaviors:
 
 ## Installation
 
-### Homebrew (macOS / Linux)
+#### ◉ Homebrew (macOS / Linux)
 
 ```bash
 brew install novalagung/tap/mllpong
 ```
 
-### Binary (macOS / Linux)
+#### ◉ Binary (macOS / Linux)
 
 ```bash
 curl -sSfL https://raw.githubusercontent.com/novalagung/mllpong/master/install.sh | sh
 ```
 
-### Linux packages
+#### ◉ Linux packages
 
 Download the `.deb`, `.rpm`, or `.apk` from the [latest release](https://github.com/novalagung/mllpong/releases/latest), then install:
 
@@ -44,7 +44,7 @@ sudo rpm -i mllpong_linux_amd64.rpm
 sudo apk add --allow-untrusted mllpong_linux_amd64.apk
 ```
 
-### Docker
+#### ◉ Docker
 
 Available on both Docker Hub and GHCR:
 
@@ -56,7 +56,29 @@ docker pull novalagung/mllpong:latest
 docker pull ghcr.io/novalagung/mllpong:latest
 ```
 
-Using `docker run` command:
+## Running MLLPong
+
+#### ◉ Binary
+
+Once installed, start the server with defaults (ACK on `2575`, Chaos on `2576`, Smart on `2577`):
+
+```bash
+mllpong
+```
+
+With CLI flags:
+
+```bash
+mllpong --ack-port 2575 --chaos-port 2576 --smart-port 2577 --rules-file /etc/hl7/rules.json
+```
+
+To see all available options:
+
+```bash
+mllpong --help
+```
+
+#### ◉ Docker
 
 ```bash
 docker run -d \
@@ -71,7 +93,7 @@ docker run -d \
   novalagung/mllpong:latest
 ```
 
-Using `docker compose`:
+#### ◉ Docker Compose
 
 ```bash
 services:
@@ -93,29 +115,7 @@ services:
     restart: unless-stopped
 ```
 
-> To use local image, simply remove the `image: novalagung/mllpong:latest` replace it with `build: .` then `docker compose up --build`
-
-## Running the Binary
-
-> If you use Docker or Docker Compose no need to follow this steps.
-
-Once installed, start the server with defaults (ACK on `2575`, Chaos on `2576`, Smart on `2577`):
-
-```bash
-mllpong
-```
-
-With CLI flags:
-
-```bash
-mllpong --ack-port 2575 --chaos-port 2576 --smart-port 2577 --rules-file /etc/hl7/rules.json
-```
-
-To see all available options:
-
-```bash
-mllpong --help
-```
+> To use local image, remove `image: novalagung/mllpong:latest` and replace it with `build: .` then run `docker compose up --build`.
 
 ## Testing the Server
 
@@ -150,7 +150,7 @@ All options can be set via CLI flag or environment variable. CLI flags take prec
 
 The smart handler (port `2577`) reads a JSON rules file at startup and matches each incoming message against the rules to decide the response. It supports per-message-type configuration, custom acknowledgment codes, artificial latency, and probabilistic chaos.
 
-### Rule file format
+#### ◉ Rule file format
 
 ```json
 {
@@ -187,7 +187,9 @@ The smart handler (port `2577`) reads a JSON rules file at startup and matches e
 }
 ```
 
-### Rule fields
+> See [rules.json](rules.json) for complete example.
+
+#### ◉ Rule fields
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -200,7 +202,7 @@ The smart handler (port `2577`) reads a JSON rules file at startup and matches e
 | `delay_ms` | int | Artificial response latency in milliseconds. |
 | `nack_rate` | float | Probability (`0.0`–`1.0`) to override the configured response with `AR`. Useful for simulating intermittent failures. |
 
-### Match priority
+#### ◉ Match priority
 
 Rules are evaluated in this order — the most-specific match wins:
 
@@ -210,7 +212,7 @@ Rules are evaluated in this order — the most-specific match wins:
 
 Match values are case-insensitive. If no rule matches at all, the server defaults to `AA`.
 
-### Included `rules.json`
+#### ◉ Included `rules.json`
 
 The repository ships with a `rules.json` that covers the most common HL7 v2 message types out of the box:
 
@@ -250,8 +252,6 @@ Override the default target addresses with environment variables:
 | `ACK_PORT` | `2575` | ACK handler port |
 | `CHAOS_PORT` | `2576` | Chaos handler port |
 | `SMART_PORT` | `2577` | Smart handler port |
-
----
 
 ## Local Build
 

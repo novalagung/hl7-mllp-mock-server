@@ -22,7 +22,7 @@ esac
 URL="https://github.com/${REPO}/releases/latest/download/${BINARY}_${OS}_${ARCH}.tar.gz"
 
 echo "Downloading $BINARY ($OS/$ARCH)..."
-curl -sSfL "$URL" | tar -xz "$BINARY"
+curl -sSfL "$URL" | tar -xz "$BINARY" || { echo "Download or extraction failed"; exit 1; }
 
 echo "Installing to $INSTALL_DIR/$BINARY..."
 if [ -w "$INSTALL_DIR" ]; then
