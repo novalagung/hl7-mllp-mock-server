@@ -3,7 +3,7 @@ WORKDIR /app
 RUN apk add --no-cache upx
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY main.go rules.json ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o mllpong . && upx --best mllpong
 
 FROM scratch
