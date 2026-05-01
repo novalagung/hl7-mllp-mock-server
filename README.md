@@ -4,7 +4,8 @@
   <img src="docs/img/mllpong.png" alt="MLLPong" width="180">
 </p>
 
-An open-source lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
+
+MLLPong - HL7 MLLP Mock Server. An open-source lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol).
 
 It exposes three TCP endpoints with different behaviors:
 
@@ -224,6 +225,10 @@ docker run -d \
 ```bash
 docker compose up -d --build
 ```
+
+## License
+
+MIT License
 
 ## Maintainer
 
