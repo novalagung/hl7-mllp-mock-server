@@ -2,11 +2,15 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -560,5 +564,207 @@ func TestSmartHandler_LoadedFromFile(t *testing.T) {
 	resp2 := sendAndReceive(t, addr, buildHL7("ORU", "R01"))
 	if ack, _, _ := getMSA(resp2); ack != "AR" {
 		t.Errorf("expected AR from wildcard, got %q", ack)
+	}
+}
+
+// --- Unit tests: envOr ---
+
+func TestEnvOr_ReturnsEnvValue(t *testing.T) {
+	t.Setenv("TEST_ENVOR_KEY", "fromenv")
+	if got := envOr("TEST_ENVOR_KEY", "fallback"); got != "fromenv" {
+		t.Errorf("expected %q, got %q", "fromenv", got)
+	}
+}
+
+func TestEnvOr_ReturnsFallback(t *testing.T) {
+	os.Unsetenv("TEST_ENVOR_KEY_MISSING")
+	if got := envOr("TEST_ENVOR_KEY_MISSING", "fallback"); got != "fallback" {
+		t.Errorf("expected %q, got %q", "fallback", got)
+	}
+}
+
+// --- Unit tests: readMLLP false end marker ---
+
+func TestReadMLLP_FalseEndMarker(t *testing.T) {
+	// 0x1C not followed by 0x0D must be written into the buffer as content, not treated as end.
+	raw := []byte{mllpStart, 'h', 'i', mllpEnd1, 'A', mllpEnd1, mllpEnd2}
+	got, err := readMLLP(bufio.NewReader(bytes.NewReader(raw)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "hi\x1cA"
+	if string(got) != want {
+		t.Errorf("expected %q, got %q", want, string(got))
+	}
+}
+
+// --- In-process tests: handler parse error paths ---
+
+func TestAckAllHandler_BadMessage_LastDitchError(t *testing.T) {
+	addr := startTestServer(t, ackAllHandler)
+	resp := sendAndReceive(t, addr, "EVN|A01|20240101\rPID|||123\r")
+	if ack, _, _ := getMSA(resp); ack != "AR" {
+		t.Errorf("expected AR from last-ditch error, got %q", ack)
+	}
+}
+
+func TestChaosHandler_BadMessage_LastDitchError(t *testing.T) {
+	addr := startTestServer(t, chaosHandler)
+	resp := sendAndReceive(t, addr, "EVN|A01|20240101\rPID|||123\r")
+	if ack, _, _ := getMSA(resp); ack != "AR" {
+		t.Errorf("expected AR from last-ditch error, got %q", ack)
+	}
+}
+
+func TestSmartHandler_EmptyResponse_DefaultsToAA(t *testing.T) {
+	addr := startTestServer(t, makeSmartHandler([]Rule{{Match: "*", Response: ""}}))
+	resp := sendAndReceive(t, addr, buildHL7("ADT", "A01"))
+	if ack, _, _ := getMSA(resp); ack != "AA" {
+		t.Errorf("expected AA for empty response field, got %q", ack)
+	}
+}
+
+// --- In-process tests: handleConn error paths ---
+
+func TestHandleConn_NonEOFReadError(t *testing.T) {
+	server, client := net.Pipe()
+	defer client.Close()
+	// Deadline triggers a non-EOF read error while readMLLP waits for more bytes.
+	server.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, ackAllHandler)
+	}()
+	client.Write([]byte{mllpStart}) // start byte only — never completes
+	<-done
+}
+
+func TestHandleConn_WriteError(t *testing.T) {
+	server, client := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, ackAllHandler)
+	}()
+	// Write a complete message then immediately close so the response write fails.
+	client.Write(wrapMLLP([]byte(buildHL7("ADT", "A01"))))
+	client.Close()
+	<-done
+}
+
+func TestHandleConn_EOFOnEmptyRead(t *testing.T) {
+	server, client := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, ackAllHandler)
+	}()
+	client.Close() // EOF with no data — should return silently
+	<-done
+}
+
+// --- In-process tests: serve ---
+
+func TestServe_AcceptsAndResponds(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go serve(ln, ackAllHandler, &wg)
+	t.Cleanup(func() { ln.Close(); wg.Wait() })
+
+	resp := sendAndReceive(t, ln.Addr().String(), buildHL7("ADT", "A01"))
+	if ack, _, _ := getMSA(resp); ack != "AA" {
+		t.Errorf("expected AA, got %q", ack)
+	}
+}
+
+func TestServe_StopsOnListenerClose(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go serve(ln, ackAllHandler, &wg)
+	ln.Close()
+	wg.Wait() // returns only if serve exited after the listener closed
+}
+
+// --- In-process tests: run ---
+
+func TestRun_StartsAllThreeHandlers(t *testing.T) {
+	ackLn, _ := net.Listen("tcp", "127.0.0.1:0")
+	chaosLn, _ := net.Listen("tcp", "127.0.0.1:0")
+	smartLn, _ := net.Listen("tcp", "127.0.0.1:0")
+	ackAddr := ackLn.Addr().String()
+	chaosAddr := chaosLn.Addr().String()
+	smartAddr := smartLn.Addr().String()
+	ackPort := ackLn.Addr().(*net.TCPAddr).Port
+	chaosPort := chaosLn.Addr().(*net.TCPAddr).Port
+	smartPort := smartLn.Addr().(*net.TCPAddr).Port
+	// Release ports so run can bind them.
+	ackLn.Close()
+	chaosLn.Close()
+	smartLn.Close()
+
+	go run("127.0.0.1",
+		fmt.Sprintf("%d", ackPort),
+		fmt.Sprintf("%d", chaosPort),
+		fmt.Sprintf("%d", smartPort),
+		"/nonexistent/rules.json",
+	)
+
+	waitReady := func(addr string) {
+		deadline := time.Now().Add(2 * time.Second)
+		for time.Now().Before(deadline) {
+			if c, err := net.DialTimeout("tcp", addr, 50*time.Millisecond); err == nil {
+				c.Close()
+				return
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+		t.Fatalf("server at %s not ready within 2s", addr)
+	}
+	waitReady(ackAddr)
+	waitReady(chaosAddr)
+	waitReady(smartAddr)
+
+	if ack, _, _ := getMSA(sendAndReceive(t, ackAddr, buildHL7("ADT", "A01"))); ack != "AA" {
+		t.Errorf("ack handler: expected AA, got %q", ack)
+	}
+	if ack, _, _ := getMSA(sendAndReceive(t, chaosAddr, buildHL7("ADT", "A01"))); ack != "AR" {
+		t.Errorf("chaos handler: expected AR, got %q", ack)
+	}
+	if ack, _, _ := getMSA(sendAndReceive(t, smartAddr, buildHL7("ADT", "A01"))); ack != "AA" {
+		t.Errorf("smart handler: expected AA, got %q", ack)
+	}
+}
+
+// --- Unit tests: readMLLP EOF paths ---
+
+func TestReadMLLP_EOFBeforeStart(t *testing.T) {
+	_, err := readMLLP(bufio.NewReader(bytes.NewReader(nil)))
+	if err != io.EOF {
+		t.Errorf("expected io.EOF, got %v", err)
+	}
+}
+
+func TestReadMLLP_EOFAfterStart(t *testing.T) {
+	_, err := readMLLP(bufio.NewReader(bytes.NewReader([]byte{mllpStart})))
+	if err != io.EOF {
+		t.Errorf("expected io.EOF, got %v", err)
+	}
+}
+
+func TestReadMLLP_EOFAfterFalseEnd(t *testing.T) {
+	// EOF while reading the byte after 0x1C (before we know if it's the end marker).
+	raw := []byte{mllpStart, 'h', mllpEnd1}
+	_, err := readMLLP(bufio.NewReader(bytes.NewReader(raw)))
+	if err != io.EOF {
+		t.Errorf("expected io.EOF, got %v", err)
 	}
 }

@@ -318,22 +318,48 @@ func handleConn(conn net.Conn, handler handlerFunc) {
 	}
 }
 
-func serve(addr string, handler handlerFunc, wg *sync.WaitGroup) {
+func serve(ln net.Listener, handler handlerFunc, wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer ln.Close()
+	log.Printf("Listening on %s", ln.Addr())
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Printf("Accept error on %s: %v", ln.Addr(), err)
+			return
+		}
+		go handleConn(conn, handler)
+	}
+}
+
+func mustListen(addr string) net.Listener {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("Failed to listen on %s: %v", addr, err)
 	}
-	defer ln.Close()
-	log.Printf("Listening on %s", addr)
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Printf("Accept error on %s: %v", addr, err)
-			continue
-		}
-		go handleConn(conn, handler)
+	return ln
+}
+
+func run(host, ackPort, chaosPort, smartPort, rulesFile string) {
+	var wg sync.WaitGroup
+
+	log.Printf("👹 STARTING CHAOS HANDLER ON PORT %s", chaosPort)
+	wg.Add(1)
+	go serve(mustListen(host+":"+chaosPort), chaosHandler, &wg)
+
+	log.Printf("👍 STARTING ALWAYS ACK SERVER ON PORT %s", ackPort)
+	wg.Add(1)
+	go serve(mustListen(host+":"+ackPort), ackAllHandler, &wg)
+
+	rules, rulesSource, err := loadRules(rulesFile)
+	if err != nil {
+		log.Fatalf("Failed to load rules: %v", err)
 	}
+	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", smartPort, rulesSource, len(rules.Rules))
+	wg.Add(1)
+	go serve(mustListen(host+":"+smartPort), smartHandler(rules), &wg)
+
+	wg.Wait()
 }
 
 func envOr(key, fallback string) string {
@@ -355,23 +381,5 @@ func main() {
 	log.Println("STARTING MLLPONG 🏓")
 	log.Println("---")
 
-	var wg sync.WaitGroup
-
-	log.Printf("👹 STARTING CHAOS HANDLER ON PORT %s", *chaosPort)
-	wg.Add(1)
-	go serve(*host+":"+*chaosPort, chaosHandler, &wg)
-
-	log.Printf("👍 STARTING ALWAYS ACK SERVER ON PORT %s", *ackPort)
-	wg.Add(1)
-	go serve(*host+":"+*ackPort, ackAllHandler, &wg)
-
-	rules, rulesSource, err := loadRules(*rulesFile)
-	if err != nil {
-		log.Fatalf("Failed to load rules: %v", err)
-	}
-	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", *smartPort, rulesSource, len(rules.Rules))
-	wg.Add(1)
-	go serve(*host+":"+*smartPort, smartHandler(rules), &wg)
-
-	wg.Wait()
+	run(*host, *ackPort, *chaosPort, *smartPort, *rulesFile)
 }

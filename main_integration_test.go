@@ -22,12 +22,6 @@ func targetHost() string {
 	return "localhost"
 }
 
-func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
 
 func ackAddr() string   { return net.JoinHostPort(targetHost(), envOr("ACK_PORT", "2575")) }
 func chaosAddr() string { return net.JoinHostPort(targetHost(), envOr("CHAOS_PORT", "2576")) }
