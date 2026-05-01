@@ -4,7 +4,7 @@
   <img src="docs/img/mllpong.png" alt="MLLPong" width="180">
 </p>
 
-A lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
+An open-source lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol). Useful for testing HL7 integrations without a real receiver.
 
 It exposes three TCP endpoints with different behaviors:
 
