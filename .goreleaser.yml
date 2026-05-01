@@ -46,7 +46,7 @@ nfpms:
   - package_name: mllpong
     homepage: https://mllpong.novalagung.com
     maintainer: Noval Agung Prayogo <caknopal@gmail.com>
-    description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
+    description: An open-source lightweight mock server for testing HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
     license: MIT
     formats:
       - deb
@@ -56,7 +56,7 @@ nfpms:
 brews:
   - name: mllpong
     homepage: https://mllpong.novalagung.com
-    description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
+    description: An open-source lightweight mock server for testing HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
     license: MIT
     repository:
       owner: novalagung

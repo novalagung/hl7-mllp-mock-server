@@ -1,5 +1,5 @@
 theme: jekyll-theme-cayman
 title: MLLPong - HL7 MLLP Mock Server
-description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
+description: An open-source lightweight mock server for testing HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
 baseurl: ""
 url: "https://mllpong.novalagung.com"

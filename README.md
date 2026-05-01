@@ -5,7 +5,7 @@
 </p>
 
 
-MLLPong - HL7 MLLP Mock Server. An open-source lightweight mock server for HL7 v2 messages over MLLP (Minimal Lower Layer Protocol).
+An open-source mock server for testing HL7 v2 messages over MLLP (Minimal Lower Layer Protocol) — packed into a single binary under **1 MB**. No runtime, no dependencies, no bloat.
 
 It exposes three TCP endpoints with different behaviors:
 
