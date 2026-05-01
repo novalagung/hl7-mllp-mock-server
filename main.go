@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -15,6 +16,9 @@ import (
 	"sync"
 	"time"
 )
+
+//go:embed rules.json
+var defaultRules []byte
 
 const (
 	mllpStart = byte(0x0B)
@@ -159,17 +163,29 @@ type RulesConfig struct {
 	Rules []Rule `json:"rules"`
 }
 
-// loadRules reads and parses a rules JSON file.
-func loadRules(path string) (*RulesConfig, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read rules file %q: %w", path, err)
-	}
+func parseRules(data []byte) (*RulesConfig, error) {
 	var cfg RulesConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parse rules file %q: %w", path, err)
+		return nil, err
 	}
 	return &cfg, nil
+}
+
+// loadRules loads rules from path, falling back to the embedded rules.json.
+func loadRules(path string) (*RulesConfig, string, error) {
+	data, err := os.ReadFile(path)
+	if err == nil {
+		cfg, err := parseRules(data)
+		if err != nil {
+			return nil, path, fmt.Errorf("parse rules file %q: %w", path, err)
+		}
+		return cfg, path, nil
+	}
+	cfg, err := parseRules(defaultRules)
+	if err != nil {
+		return nil, "embedded", fmt.Errorf("parse embedded rules: %w", err)
+	}
+	return cfg, "embedded", nil
 }
 
 // matchRule returns the best-matching rule for a given message type and trigger event.
@@ -348,12 +364,11 @@ func main() {
 	wg.Add(1)
 	go serve(*host+":"+*ackPort, ackAllHandler, &wg)
 
-	rules, err := loadRules(*rulesFile)
+	rules, rulesSource, err := loadRules(*rulesFile)
 	if err != nil {
-		log.Printf("Warning: could not load rules from %q: %v — using empty config", *rulesFile, err)
-		rules = &RulesConfig{}
+		log.Fatalf("Failed to load rules: %v", err)
 	}
-	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", *smartPort, *rulesFile, len(rules.Rules))
+	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", *smartPort, rulesSource, len(rules.Rules))
 	wg.Add(1)
 	go serve(*host+":"+*smartPort, smartHandler(rules), &wg)
 

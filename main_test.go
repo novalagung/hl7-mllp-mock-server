@@ -214,7 +214,7 @@ func TestLoadRules_ValidJSON(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "rules.json")
 	os.WriteFile(f, data, 0644)
 
-	loaded, err := loadRules(f)
+	loaded, _, err := loadRules(f)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestLoadRules_AllFields(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "rules.json")
 	os.WriteFile(f, []byte(raw), 0644)
 
-	loaded, err := loadRules(f)
+	loaded, _, err := loadRules(f)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -242,21 +242,28 @@ func TestLoadRules_AllFields(t *testing.T) {
 func TestLoadRules_InvalidJSON(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "rules.json")
 	os.WriteFile(f, []byte("not json"), 0644)
-	if _, err := loadRules(f); err == nil {
+	if _, _, err := loadRules(f); err == nil {
 		t.Error("expected error for invalid JSON")
 	}
 }
 
 func TestLoadRules_MissingFile(t *testing.T) {
-	if _, err := loadRules("/nonexistent/rules.json"); err == nil {
-		t.Error("expected error for missing file")
+	cfg, src, err := loadRules("/nonexistent/rules.json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if src != "embedded" {
+		t.Errorf("expected source %q, got %q", "embedded", src)
+	}
+	if len(cfg.Rules) == 0 {
+		t.Error("expected embedded rules to be non-empty")
 	}
 }
 
 func TestLoadRules_EmptyRules(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "rules.json")
 	os.WriteFile(f, []byte(`{"rules":[]}`), 0644)
-	loaded, err := loadRules(f)
+	loaded, _, err := loadRules(f)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -539,7 +546,7 @@ func TestSmartHandler_LoadedFromFile(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "rules.json")
 	os.WriteFile(f, []byte(raw), 0644)
 
-	cfg, err := loadRules(f)
+	cfg, _, err := loadRules(f)
 	if err != nil {
 		t.Fatalf("loadRules: %v", err)
 	}
