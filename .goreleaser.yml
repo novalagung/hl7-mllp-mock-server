@@ -9,6 +9,10 @@ builds:
     binary: mllpong
     env:
       - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
     goos:
       - linux
       - darwin
@@ -19,6 +23,12 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+
+upx:
+  - enabled: true
+    compress: best
+    goos:
+      - linux
 
 archives:
   - formats:

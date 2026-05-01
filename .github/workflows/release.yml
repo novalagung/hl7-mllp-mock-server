@@ -20,6 +20,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install UPX
+        run: sudo apt-get install -y upx
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
