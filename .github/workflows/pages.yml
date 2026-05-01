@@ -6,6 +6,7 @@ on:
     paths:
       - README.md
       - docs/img/mllpong.png
+      - docs/img/mllpong-opengraph.png
       - docs/_config.yml
       - docs/_includes/head-custom.html
       - .github/workflows/pages.yml
