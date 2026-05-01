@@ -53,17 +53,23 @@ nfpms:
       - rpm
       - apk
 
-brews:
+homebrew_casks:
   - name: mllpong
     homepage: https://mllpong.novalagung.com
     description: An open-source lightweight mock server for testing HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
     license: MIT
+    url:
+      verified: github.com/novalagung/mllpong
     repository:
       owner: novalagung
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    install: |
-      bin.install "mllpong"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/mllpong"]
+          end
 
 release:
   github:

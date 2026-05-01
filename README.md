@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://github.com/novalagung/mllpong/releases/tag/v1.0.0"><img src="https://img.shields.io/github/actions/workflow/status/novalagung/mllpong/docker-image.yml"></a>
   <a href="https://hub.docker.com/r/novalagung/mllpong"><img src="https://img.shields.io/docker/pulls/novalagung/mllpong"></a>
+  <a href="https://github.com/novalagung/mllpong/actions/workflows/coverage.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/novalagung/mllpong/master/coverage.json"></a>
 </p>
 
 MLLPong is an open-source mock server for testing HL7 v2 messages over MLLP (Minimal Lower Layer Protocol) — packed into a single binary under **1 MB**. No runtime, no dependencies, no bloat.
