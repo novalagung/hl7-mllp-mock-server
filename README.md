@@ -91,7 +91,7 @@ printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT
 | `HOST` | `0.0.0.0` | Interface to bind |
 | `ACK_PORT` | `2575` | Port for the always-ACK handler |
 | `CHAOS_PORT` | `2576` | Port for the always-NACK chaos handler |
-| `SMART_PORT` | _(disabled)_ | Port for the rule-based smart handler; omit to disable |
+| `SMART_PORT` | `2577` | Port for the rule-based smart handler |
 | `RULES_FILE` | `rules.json` | Path to the smart handler rules config file |
 
 ## Smart Handler
