@@ -51,6 +51,7 @@ brews:
     repository:
       owner: novalagung
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     install: |
       bin.install "mllpong"
 
