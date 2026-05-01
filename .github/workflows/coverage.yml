@@ -1,0 +1,40 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Generate coverage badge JSON
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep ^total | awk '{print $3}' | tr -d '%')
+          PCT=$(echo "$COVERAGE" | awk '{printf "%d", int($1)}')
+          if [ "$PCT" -ge 90 ]; then COLOR=brightgreen
+          elif [ "$PCT" -ge 70 ]; then COLOR=green
+          elif [ "$PCT" -ge 50 ]; then COLOR=yellow
+          else COLOR=red
+          fi
+          printf '{\n  "schemaVersion": 1,\n  "label": "coverage",\n  "message": "%s%%",\n  "color": "%s"\n}\n' "$COVERAGE" "$COLOR" > coverage.json
+
+      - name: Commit coverage badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add coverage.json
+          git diff --staged --quiet || git commit -m "chore: update coverage badge"
+          git push
