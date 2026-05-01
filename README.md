@@ -85,6 +85,19 @@ docker run -d \
   -e ACK_PORT=2575 \
   -e CHAOS_PORT=2576 \
   -e SMART_PORT=2577 \
+  -p 2575:2575 \
+  -p 2576:2576 \
+  -p 2577:2577 \
+  novalagung/mllpong:latest
+```
+
+Or with custom `rules.json`:
+
+```bash
+docker run -d \
+  -e ACK_PORT=2575 \
+  -e CHAOS_PORT=2576 \
+  -e SMART_PORT=2577 \
   -e RULES_FILE=/etc/hl7/rules.json \
   -p 2575:2575 \
   -p 2576:2576 \
@@ -105,6 +118,25 @@ services:
       ACK_PORT: 2575
       CHAOS_PORT: 2576
       SMART_PORT: 2577
+    ports:
+      - "2575:2575"
+      - "2576:2576"
+      - "2577:2577"
+    restart: unless-stopped
+```
+
+Or with custom `rules.json`:
+
+```bash
+services:
+  mllpong:
+    image: novalagung/mllpong:latest
+    # build: .
+    environment:
+      HOST: "0.0.0.0"
+      ACK_PORT: 2575
+      CHAOS_PORT: 2576
+      SMART_PORT: 2577
       RULES_FILE: /etc/hl7/rules.json
     ports:
       - "2575:2575"
@@ -114,8 +146,6 @@ services:
       - ./rules.json:/etc/hl7/rules.json:ro
     restart: unless-stopped
 ```
-
-> To use local image, remove `image: novalagung/mllpong:latest` and replace it with `build: .` then run `docker compose up --build`.
 
 ## Testing the Server
 
