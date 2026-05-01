@@ -1,4 +1,4 @@
-name: Build Image & Push
+name: Build Docker Image & Push
 
 on:
   push:
@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: novalagung/mllpong
 
 jobs:
-  build-image-and-push:
+  docker-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -1,0 +1,60 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: .
+    binary: mllpong
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: "checksums.txt"
+
+nfpms:
+  - package_name: mllpong
+    homepage: https://mllpong.novalagung.com
+    maintainer: Noval Agung Prayogo <caknopal@gmail.com>
+    description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+
+brews:
+  - name: mllpong
+    homepage: https://mllpong.novalagung.com
+    description: A lightweight mock server for HL7 v2 messages over MLLP — always-ACK, always-NACK, and rule-based smart handler
+    license: MIT
+    repository:
+      owner: novalagung
+      name: homebrew-tap
+    install: |
+      bin.install "mllpong"
+
+release:
+  github:
+    owner: novalagung
+    name: mllpong
