@@ -12,6 +12,7 @@ import (
 	"math/rand/v2"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -173,7 +174,7 @@ func parseRules(data []byte) (*RulesConfig, error) {
 
 // loadRules loads rules from path, falling back to the embedded rules.json.
 func loadRules(path string) (*RulesConfig, string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filepath.Clean(path))
 	if err == nil {
 		cfg, err := parseRules(data)
 		if err != nil {
