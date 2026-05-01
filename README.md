@@ -187,7 +187,7 @@ The smart handler (port `2577`) reads a JSON rules file at startup and matches e
 }
 ```
 
-> See [rules.json](rules.json) for complete example.
+> See [rules.json](https://github.com/novalagung/mllpong/blob/master/rules.json) for complete example.
 
 #### ◉ Rule fields
 
