@@ -15,7 +15,36 @@ It exposes three TCP endpoints with different behaviors:
 | Chaos handler | `2576` | Always replies with `AR` (application reject) |
 | Smart handler | `2577` | Responds based on message type rules from a JSON config file |
 
-## Pull the Image
+## Installation
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew install novalagung/tap/mllpong
+```
+
+### Binary (macOS / Linux)
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/novalagung/mllpong/master/install.sh | sh
+```
+
+### Linux packages
+
+Download the `.deb`, `.rpm`, or `.apk` from the [latest release](https://github.com/novalagung/mllpong/releases/latest), then install:
+
+```bash
+# Debian / Ubuntu
+sudo dpkg -i mllpong_linux_amd64.deb
+
+# RHEL / Fedora
+sudo rpm -i mllpong_linux_amd64.rpm
+
+# Alpine
+sudo apk add --allow-untrusted mllpong_linux_amd64.apk
+```
+
+### Docker
 
 Available on both Docker Hub and GHCR:
 
@@ -27,7 +56,7 @@ docker pull novalagung/mllpong:latest
 docker pull ghcr.io/novalagung/mllpong:latest
 ```
 
-## Run with Docker
+Using `docker run` command:
 
 ```bash
 docker run -d \
@@ -42,9 +71,7 @@ docker run -d \
   novalagung/mllpong:latest
 ```
 
-Omit `SMART_PORT` (and the related flags) to run without the smart handler.
-
-## Run with Docker Compose
+Using `docker compose`:
 
 ```bash
 services:
@@ -66,7 +93,29 @@ services:
     restart: unless-stopped
 ```
 
-To use local image, simply remove the `image: novalagung/mllpong:latest` replace it with `build: .`.
+> To use local image, simply remove the `image: novalagung/mllpong:latest` replace it with `build: .` then `docker compose up --build`
+
+## Running the Binary
+
+> If you use Docker or Docker Compose no need to follow this steps.
+
+Once installed, start the server with defaults (ACK on `2575`, Chaos on `2576`, Smart on `2577`):
+
+```bash
+mllpong
+```
+
+With CLI flags:
+
+```bash
+mllpong --ack-port 2575 --chaos-port 2576 --smart-port 2577 --rules-file /etc/hl7/rules.json
+```
+
+To see all available options:
+
+```bash
+mllpong --help
+```
 
 ## Testing the Server
 
@@ -85,15 +134,17 @@ printf '\x0bMSH|^~\&|sender|sender|receiver|receiver|20240101120000||ADT^A01^ADT
 
 > HL7 uses `\r` (carriage return) as the segment separator. Without `| tr '\r' '\n'` the response appears blank in the terminal because each segment overwrites the previous line.
 
-## Environment Variables
+## Configuration
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `HOST` | `0.0.0.0` | Interface to bind |
-| `ACK_PORT` | `2575` | Port for the always-ACK handler |
-| `CHAOS_PORT` | `2576` | Port for the always-NACK chaos handler |
-| `SMART_PORT` | `2577` | Port for the rule-based smart handler |
-| `RULES_FILE` | `rules.json` | Path to the smart handler rules config file |
+All options can be set via CLI flag or environment variable. CLI flags take precedence over env vars.
+
+| Flag | Env var | Default | Description |
+| --- | --- | --- | --- |
+| `--host` | `HOST` | `0.0.0.0` | Interface to bind |
+| `--ack-port` | `ACK_PORT` | `2575` | Port for the always-ACK handler |
+| `--chaos-port` | `CHAOS_PORT` | `2576` | Port for the always-NACK chaos handler |
+| `--smart-port` | `SMART_PORT` | `2577` | Port for the rule-based smart handler |
+| `--rules-file` | `RULES_FILE` | `rules.json` | Path to the smart handler rules JSON file |
 
 ## Smart Handler
 

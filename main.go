@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 )
 
 const (
@@ -319,41 +319,43 @@ func serve(addr string, handler handlerFunc, wg *sync.WaitGroup) {
 	}
 }
 
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.Println("STARTING MLLPONG 🏓")
 	log.Println("---")
 
-	host := os.Getenv("HOST")
-	if host == "" {
-		host = "0.0.0.0"
-	}
+	host := flag.String("host", envOr("HOST", "0.0.0.0"), "interface to bind")
+	ackPort := flag.String("ack-port", envOr("ACK_PORT", "2575"), "port for the always-ACK handler")
+	chaosPort := flag.String("chaos-port", envOr("CHAOS_PORT", "2576"), "port for the always-NACK chaos handler")
+	smartPort := flag.String("smart-port", envOr("SMART_PORT", "2577"), "port for the rule-based smart handler (omit to disable)")
+	rulesFile := flag.String("rules-file", envOr("RULES_FILE", "rules.json"), "path to the smart handler rules JSON file")
+	flag.Parse()
 
 	var wg sync.WaitGroup
 
-	chaosPort := os.Getenv("CHAOS_PORT")
-	log.Printf("👹 STARTING CHAOS HANDLER ON PORT %s", chaosPort)
+	log.Printf("👹 STARTING CHAOS HANDLER ON PORT %s", *chaosPort)
 	wg.Add(1)
-	go serve(host+":"+chaosPort, chaosHandler, &wg)
+	go serve(*host+":"+*chaosPort, chaosHandler, &wg)
 
-	ackPort := os.Getenv("ACK_PORT")
-	log.Printf("👍 STARTING ALWAYS ACK SERVER ON PORT %s", ackPort)
+	log.Printf("👍 STARTING ALWAYS ACK SERVER ON PORT %s", *ackPort)
 	wg.Add(1)
-	go serve(host+":"+ackPort, ackAllHandler, &wg)
+	go serve(*host+":"+*ackPort, ackAllHandler, &wg)
 
-	smartPort := os.Getenv("SMART_PORT")
-	rulesFile := os.Getenv("RULES_FILE")
-	if rulesFile == "" {
-		rulesFile = "rules.json"
-	}
-	rules, err := loadRules(rulesFile)
+	rules, err := loadRules(*rulesFile)
 	if err != nil {
-		log.Printf("Warning: could not load rules from %q: %v — using empty config", rulesFile, err)
+		log.Printf("Warning: could not load rules from %q: %v — using empty config", *rulesFile, err)
 		rules = &RulesConfig{}
 	}
-	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", smartPort, rulesFile, len(rules.Rules))
+	log.Printf("🧠 STARTING SMART HANDLER ON PORT %s (rules: %s, %d rules loaded)", *smartPort, *rulesFile, len(rules.Rules))
 	wg.Add(1)
-	go serve(host+":"+smartPort, smartHandler(rules), &wg)
+	go serve(*host+":"+*smartPort, smartHandler(rules), &wg)
 
 	wg.Wait()
 }
